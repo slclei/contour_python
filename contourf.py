@@ -38,6 +38,7 @@ def contourf(filename):
         if len(tmpline)>0 and tmpline[0]=='VARIABLES':
             label=tmpline[1:]
             #loop to del ',' in each label and '' in label
+            delnum=[]
             for i in range(len(label)):
                 item=label[i]
                 if ',' in item:
@@ -47,9 +48,14 @@ def contourf(filename):
                     else:
                         label[i]=item[:-1]
                 if label[i]=='':
-                    del label[i]
+                    tmpi=i
+                    delnum.append(tmpi)
             label[0]='X'
-            print(label)
+            #del empty elements
+            for i in range(len(delnum)):
+                #consider i elements have been deleted
+                tmpi=delnum[i]-i
+                del label[tmpi]
             continue
         #skip top rows
                 #skip rows with text
@@ -105,9 +111,16 @@ def contourf(filename):
     realplot(x,y,z,chosezone,label[choselabel])
 
 #real plot function
-def realplot(X,Y,Z,i,label):               
+def realplot(X,Y,Z,i,label):      
+    #set figure size
+    plt.figure(figsize=(10,3))         
     #plot contour. level=8: number of contour; cmap: color of line
-    plt.tricontourf(X,Y,Z,10,alpha=0.5,cmap='jet')
+    cmapstr='jet'
+    #reverse colorbar for pH
+    if label=='pH':
+        cmapstr+='_r'
+    plt.tricontourf(X,Y,Z,10,alpha=1,cmap=cmapstr)
+    ax=plt.axes()
             
     #add digit label in line, black, with 0.XX
     #C=plt.tricontour(X0,Y0,Z0,10,alpha=0.5,cmap='jet')
@@ -116,8 +129,16 @@ def realplot(X,Y,Z,i,label):
     plt.colorbar()
     #show title
     plt.title('zone'+str(i)+' '+label)
-    plt.xlabel('Distance')
-    plt.ylabel('Depth')
+    #set x and y axies
+    plt.xlabel('Distance (m)')
+    plt.ylabel('Depth (m)')
+    ax.tick_params(axis="both",direction="in")
+    x_minimum=0
+    x_maximum=(int(max(X)/100)+1)*100
+    y_minimum=(int(min(Y)/10)-1)*10
+    y_maximum=0
+    ax.set_xlim(x_minimum, x_maximum)
+    ax.set_ylim(y_minimum, y_maximum)
 
     #show final plot
     plt.show()  
