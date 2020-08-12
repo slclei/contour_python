@@ -167,6 +167,9 @@ def setpath():
                 pathconfirm=input('New path is %s, confirm with this? (y/n)'%newprintpath)
                 if pathconfirm=='y':
                     break
+            #check if newpath end with '/'
+            if newpath[-1]!='/':
+                newpath+='/'
             path=newpath
             break
         #keep original path
