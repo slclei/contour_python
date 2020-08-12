@@ -1,41 +1,59 @@
-#!/usr/bin/python
+#!/anaconda3/bin/python
 import numpy as np
 import pandas as pd
 import csv
 import matplotlib.pyplot as plt
-from scipy.interpolate import griddata
 
-def contourf(filename, skip, label):
-    # co2d_tim.dat, data start at line 14
-    # col name: ELEM    Time(yr)        Sg         Sl      T(C)     pH       SMco2     Porosity    Perm(m^2)  t_ca+2      t_mg+2      t_na+       t_k+        t_fe+2      t_alo2-     t_sio2(aq)  t_cl-       t_hco3-     t_so4-2     halite      illite      quartz      albite      kaolinite   calcite     dolomite    ankerite-2  chlorite    magnesite   k-feldspar  muscovite   siderite-2  pyrite      anhydrite   anorthite   smectite-na smectite-ca gypsum      co2(g)      chg.bal.(eq
-    #filename=path+'co2d_conc.dat'
-    #skip=13
-
+def contourf(filename):
     #load sample into lines
     fp=open(filename,'r')
     lines=fp.readlines()
     fp.close()
 
     #save data into matrix. Note: several matrixes are used for several zones
-    #number of zones, defalut is 1
-    n_zone=1
+    #number of zones, defalut is 0
+    n_zone=0
     #dictionary to record data in each zone
-    zone={1:[]}
-    zonename=["0.000000E+00 yr"]
+    zone={}
+    zonename=[]
+    #record label
+    label=[]
+    #set skip=1 after get 1st zone
+    skip=0
+
     #save data to zones
     for line in lines:
-        #skip rows with text
-        if skip>0:
-            skip-=1
-            continue
         #split the line with space
         tmpline=line.split()
         #print(len(tmpline))
         #add a zone if this line start with ZONE, and skip this line
-        if tmpline[0]=='ZONE':
+        if len(tmpline)>0 and tmpline[0]=='ZONE':
             n_zone+=1
             zone[n_zone]=[]
-            zonename.append(tmpline[2])
+            #store T number without first "
+            zonename.append(tmpline[2][1:])
+            skip=1
+            continue
+        #record label
+        if len(tmpline)>0 and tmpline[0]=='VARIABLES':
+            label=tmpline[1:]
+            #loop to del ',' in each label and '' in label
+            for i in range(len(label)):
+                item=label[i]
+                if ',' in item:
+                    tmpindex=item.index(',')
+                    if tmpindex==0:
+                        label[i]=item[1:]
+                    else:
+                        label[i]=item[:-1]
+                if label[i]=='':
+                    del label[i]
+            label[0]='X'
+            print(label)
+            continue
+        #skip top rows
+                #skip rows with text
+        if skip==0:
             continue
 
         #add data of this line to zone[n_zone]
@@ -156,14 +174,13 @@ def setfile(printpath):
 
 #main function, with simple console UI
 def main():
-    #infinit loop to exe, until exit is enter in the end
-    #contourf()
-    time=1
     #dictionary to store file type, with skip lines and label name
-    file={'co2d_conc.dat':[10,('X,Y,Z,Sg,Sl,T,pH,Density_L,t_ca+2,t_mg+2,t_na+,t_k+,t_fe+2,t_alo2-,t_sio2(aq),t_cl-,t_hco3-,t_so4-2').split(',')],
-    'co2d_min.dat':[11,('X,Y,Z,T,SMco2,Porosity,Permeabi.,halite,illite,quartz,albite,kaolinite,calcite,dolomite,ankerite-2 ,chlorite   ,magnesite  ,k-feldspar ,muscovite  ,siderite-2 ,pyrite,anhydrite  ,anorthite  ,smectite-na,smectite-ca,gypsum').split(',')]}
+    #file={'co2d_conc.dat':[10,('X,Y,Z,Sg,Sl,T,pH,Density_L,t_ca+2,t_mg+2,t_na+,t_k+,t_fe+2,t_alo2-,t_sio2(aq),t_cl-,t_hco3-,t_so4-2').split(',')],
+    #'co2d_min.dat':[11,('X,Y,Z,T,SMco2,Porosity,Permeabi.,halite,illite,quartz,albite,kaolinite,calcite,dolomite,ankerite-2 ,chlorite   ,magnesite  ,k-feldspar ,muscovite  ,siderite-2 ,pyrite,anhydrite  ,anorthite  ,smectite-na,smectite-ca,gypsum').split(',')],
+    #'co2d_tim.dat':[13,('ELEM,Time(yr),Sg,Sl,T(C),pH,SMco2,Porosity,Perm(m^2),t_ca+2,t_mg+2,t_na+,t_k+,t_fe+2,t_alo2-,t_sio2(aq),t_cl-,t_hco3-,t_so4-2,halite,illite,quartz,albite,kaolinite,calcite,dolomite,ankerite-2,chlorite,magnesite,k-feldspar,muscovite,siderite-2,pyrite,anhydrite,anorthite,smectite-na,smectite-ca gypsum,co2(g),chg.bal.(eq)').split(',')]}
    
-    while (time):
+   #infinit loop to exe, until exit is enter in the end
+    while (1):
         #define path
         path=setpath()
         printpath=esc('31;1;4') + path + esc(0)
@@ -172,9 +189,17 @@ def main():
         filename=setfile(printpath)
 
         #call contourf to plot contourf
-        contourf(path+filename,file[filename][0],file[filename][1])
+        if filename!='co2d_tim.dat':
+            contourf(path+filename)
+        else:
+            print(filename)
+            #plot(path+filename,file[filename][1])
 
-        time-=1
+        route=input('Do you wang to continue another plot? (y/n)')
+        if route=='y' or route=='Y':
+            continue
+        else:
+            break
 
 
 if __name__ == '__main__':
